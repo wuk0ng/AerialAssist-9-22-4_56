@@ -8,9 +8,10 @@ package nerdHerd.robot2014;
 
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Victor;
 import nerdHerd.util.ThreeCimBallShifter;
-
+import nerdHerd.robot2014.Shooter;
 /**
  *
  * @author Jordan
@@ -18,44 +19,40 @@ import nerdHerd.util.ThreeCimBallShifter;
 public class PainTrain {
     private ThreeCimBallShifter m_leftGearbox, m_rightGearbox;
     private Intake m_intake;
-//    private Shooter m_shooter;
+    private Shooter m_shooter;
     private Compressor m_compressor;
-    
+    private Encoder m_encodeLeft, m_encodeRight;
     private ThreeCimBallShifter.GearNumber m_gear = ThreeCimBallShifter.GearNumber.kFirstGear;
     private boolean m_isEnabled = false;
     
     
-    public PainTrain(int victorIndex, int solenoidIndex){
-        m_leftGearbox   = new ThreeCimBallShifter(  new Victor(victorIndex),
-                                                    new Victor(victorIndex + 1),
-                                                    new Victor(victorIndex + 2),
-                                                    new DoubleSolenoid (solenoidIndex,
-                                                                        solenoidIndex +1));
+    public PainTrain(){
+        m_leftGearbox   = new ThreeCimBallShifter(  new Victor(1),
+                                                    new Victor(2),
+                                                    new Victor(3),
+                                                    new DoubleSolenoid (1,2) );
                 
-        m_rightGearbox  = new ThreeCimBallShifter(  new Victor(victorIndex + 3),
-                                                    new Victor(victorIndex + 4),
-                                                    new Victor(victorIndex + 5));
+        m_rightGearbox  = new ThreeCimBallShifter(  new Victor(4),
+                                                    new Victor(5),
+                                                    new Victor(6));
         
-        m_intake        = new Intake( solenoidIndex +2,
-                                      solenoidIndex +4,
-                                      victorIndex   +6);
-        
-//        m_shooter       = new Shooter(  canJagIndex +2,
-//                                        victorIndex +5,
-//                                        victorIndex +6,
-//                                        solenoidIndex +6,
-//                                        solenoidIndex +7,
-//                                        2,
-//                                        3
-//                                      );
-        
-        m_compressor    = new Compressor(1,1);
+        m_shooter       = new Shooter(7,8,7,8,9);
+        m_intake        = new Intake( 3,
+                                      5,
+                                      10 );
+        m_encodeLeft = new Encoder(2,3);
+        m_encodeRight = new Encoder(5,6);
+  
+        m_compressor    = new Compressor(1,4);
         m_compressor.start();
     }
     
     public void init(){
         m_intake.init();
-//        m_shooter.init();
+        m_encodeLeft.start();
+        m_encodeLeft.reset();
+        m_encodeRight.start();
+        m_encodeRight.reset();
     }
     
     public void disable(){
@@ -68,16 +65,19 @@ public class PainTrain {
     }
     
     public void run(){
-        if(!m_isEnabled){
+        if(m_isEnabled){
+            m_leftGearbox.run();
+            m_rightGearbox.run();
+            m_intake.run();
+            m_shooter.run();
+//            check();
+        }else{
             m_leftGearbox.set(0.0);
             m_rightGearbox.set(0.0);
             m_intake.disable();
-//            m_shooter.disable();
+            m_shooter.disable();
+//            check();
         }
-        m_leftGearbox.run();
-        m_rightGearbox.run();
-        m_intake.run();
-//        m_shooter.run();
     }
     
     public void setLeft(double value){
@@ -92,8 +92,12 @@ public class PainTrain {
 //        m_shooter.pullDown();
     }
     
-    public void releaseShooter(){
-//        m_shooter.fire();
+    public void shoot(double time){
+        m_shooter.shoot(time);
+    }
+    
+    public void disableShooter(){
+        m_shooter.disable();
     }
     
     public void retractIntake(){
@@ -115,5 +119,30 @@ public class PainTrain {
     public void shift(ThreeCimBallShifter.GearNumber value){
         m_leftGearbox.shift(value);
     }
+    public int getLeftGBEncoder(){
+      return m_encodeLeft.get();
+      
+    }
     
+    public int getRightGBEncoder(){
+       return m_encodeRight.get();
+    }
+    
+    public int getShooterEncoder(){
+       return m_shooter.getEncoder();
+    }
+    
+    public double getShootTime(){
+       return m_shooter.getShootTime();
+    }
+    public double getRetractTime(){
+       return m_shooter.getRetractTime();
+    }
+//    public void check(){
+//        if(m_intake.isIntakeUp()){
+//            m_shooter.disable();
+//        }else if(m_shooter.isShooterOut()){
+//            m_intake.disable();
+//        }
+//    }
 }

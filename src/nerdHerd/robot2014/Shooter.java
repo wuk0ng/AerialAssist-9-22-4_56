@@ -1,137 +1,146 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+/*----------------------------------------------------------------------------*/
+/* Copyright (c) FIRST 2008. All Rights Reserved.                             */
+/* Open Source Software - may be modified and shared by FRC teams. The code   */
+/* must be accompanied by the FIRST BSD license file in the root directory of */
+/* the project.                                                               */
+/*----------------------------------------------------------------------------*/
+
 package nerdHerd.robot2014;
 
-import edu.wpi.first.wpilibj.CANJaguar;
-import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.DoubleSolenoid;
-import edu.wpi.first.wpilibj.Encoder;
-import edu.wpi.first.wpilibj.Victor;
-import edu.wpi.first.wpilibj.can.CANTimeoutException;
-import java.lang.Math;
-import nerdHerd.util.NerdyTimer;
 
+import edu.wpi.first.wpilibj.Victor;
+import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.IterativeRobot;
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.Timer;
 /**
- *
- * @author Jordan
+ * The VM is configured to automatically run this class,and to call the
+ * functions corresponding to each mode,as described in the IterativeRobot
+ * documentation. If you change the name of this class or the package after
+ * creating this project,you must also update the manifest file in the resource
+ * directory.
  */
 public class Shooter {
-    private CANJaguar m_jag;
-    private Victor  m_victorOne, m_victorTwo;
-    private DoubleSolenoid m_releaseSol;
-    private DigitalInput m_lowerSwitch;
-    private NerdyTimer m_solenoidDeadTime, m_shooterDelay;
-    private Encoder m_pullDownEncoder;
+    Victor motor1,motor2,motor3;
+    Timer time, shootTime, retractTime;
+    Encoder encoder;
+    boolean shooting = false;
+    boolean retracting = false;
+    double m_timeToShoot;
+    double desired = 75;
+    double error = 0;
+    double p = .2;
+    double can1Volt,can1Current,can2Volt,can2Current,can3Volt,can3Current;
+    double currentTime;
     
-    private DoubleSolenoid.Value m_solValue = DoubleSolenoid.Value.kReverse;
-    private double  m_valToMotors           = 0.0;
-    private final double m_backSpin         = 1;
-    private boolean m_isEnabled             = false;
-    private boolean m_isArmed               = false;
-    private boolean m_pullDown              = false;
-    private boolean m_fire                  = false;
-    private boolean m_isPulledDown          = false;
-    private boolean m_isSlacked             = false;
-    private boolean m_isSolenoidActive      = false;
-    
-    public Shooter(int jag, 
-                   int victor1, 
-                   int victor2, 
-                   int sol1, 
-                   int sol2, 
-                   int btn, 
-                   int encoderNum1 ){
-        try{
-            m_jag               = new CANJaguar(jag);
-            m_victorOne         = new Victor(victor1);
-            m_victorTwo         = new Victor(victor2);
-            m_releaseSol        = new DoubleSolenoid(sol1,sol2);
-            m_lowerSwitch       = new DigitalInput(btn);
-            m_solenoidDeadTime  = new NerdyTimer(0.05);
-            m_shooterDelay      = new NerdyTimer(2);
-            m_pullDownEncoder   = new Encoder(encoderNum1, encoderNum1 +1);
-            m_pullDownEncoder.setDistancePerPulse(.72);
-            m_pullDownEncoder.start();
-            m_solenoidDeadTime.start();
-            m_shooterDelay.start();
-            }catch(CANTimeoutException e){}
+    public Shooter(int encoderA, int encoderB, int victor1, int victor2, int victor3) {
+      
+        encoder = new Encoder(encoderA, encoderB);
+        encoder.start();
+        encoder.reset();
+        motor1 = new Victor(victor1);//2
+        motor2 = new Victor(victor2);//5
+        motor3 = new Victor(victor3);//4
+      
+      time = new Timer();
+      shootTime = new Timer();
+      retractTime = new Timer();
+      
+      time.start();
+      time.reset();
     }
-    
-    public void init(){
-        m_solValue              = DoubleSolenoid.Value.kReverse;
-        m_solenoidDeadTime.reset();
-    }
-    
-    public void run(){
-        if(!m_isEnabled){
-            m_solValue              = DoubleSolenoid.Value.kOff;
-            m_valToMotors           = 0.0;
-        }else if(m_isSlacked){
-            if(m_fire){
-                m_solValue          = DoubleSolenoid.Value.kReverse;
-                m_solenoidDeadTime.reset();
-                m_fire              = false;
-                m_isArmed           = false;
-                m_isSlacked         = false;
-                m_pullDown          = false;
-            }
-        }else if(m_isArmed){ 
-            if(m_backSpin <= Math.abs(m_pullDownEncoder.getDistance())){
-                m_valToMotors       = 0.0;
-                m_isArmed           = true;
-                m_isSlacked         = true;
-            }
-        }else if(m_pullDown){
-            if(!m_isPulledDown){
-                m_isPulledDown      = m_lowerSwitch.get();
-                m_valToMotors       = -.5;
-            }else{
-                m_pullDown          = false;
-                m_isSolenoidActive  = false;
-                m_isArmed           = true;
-                m_valToMotors       = 0.0;
-                m_solValue          = DoubleSolenoid.Value.kForward;
-                m_solenoidDeadTime.reset();
-                m_pullDownEncoder.reset();
-            }
+
+    public void run() {
+        double power;
+        if (shooting == false && retracting == false) {
+            power = 0.0;
+        } else if (shooting == false && retracting == true) {
+            power = m_retract();
+        } else if (shooting == true && retracting == false) {
+            power = m_shoot();
+        } else { // shooting == true && retracting == true
+            power = 0.0;
         }
-        
-        try{
-            m_jag.setX(m_valToMotors);
-            m_victorOne.set(m_valToMotors);
-            m_victorTwo.set(m_valToMotors);
-        }catch(CANTimeoutException e){}
-        if(m_isSolenoidActive){
-            if(m_solenoidDeadTime.hasPeriodPassed()){
-                m_isSolenoidActive = false;
-            }         
-        }
-        
+
+        motor1.set(power);
+        motor2.set(power);
+        motor3.set(power);
     }
     
-    public void enable(){
-        m_isEnabled = true;
+    public void shoot(double timeToShoot){
+        m_timeToShoot = timeToShoot;
+        if(false == shooting && false == retracting) {
+            shooting = true;
+            retracting = false;
+            shootTime.start();
+            shootTime.reset();
+        }
     }
     
     public void disable(){
-        m_isEnabled = true;
+        shooting = false;
+        retracting = false;
     }
     
-    public void pullDown(){
-        if(m_pullDown != true){
-            m_pullDown = true && m_shooterDelay.hasPeriodPassed();
+    private double m_shoot(){        
+        if(encoder.get()>= desired || shootTime.get() > m_timeToShoot){
+            shooting = false;
+            retracting = true;
+            shootTime.stop();
+            retractTime.start();
+            retractTime.reset();
+            return .1;       
+        }else{  // encoder < desired && shootTime < 0.2
+            error = desired-encoder.get();
+            return -1;
+        }
+    }
+    private double threshold(double value){
+        if(value > 1.0){
+            return 1.0;
+        }else if(value<-1){
+            return -.5;
+        }else{
+            return value;
         }
     }
     
-    public boolean isArmed(){
-        return m_isArmed;
+    private double m_retract( ){
+        if(encoder.get()<=0  || retractTime.get() >= 1.0){
+            shooting = false;
+            retracting = false;
+            return 0;
+        } else {  // encoder > 0 && retractTime < 1.0
+           return .1;           
+        }
     }
     
-    public void fire(){
-        m_fire = true && m_isSlacked;
+    public int getEncoder(){
+        return encoder.get();
+    }
+    
+    public double getShootTime(){
+        return shootTime.get();
     }
     
     
+    public double getRetractTime(){
+        return retractTime.get();
+    }
+//    public void safety(){
+//        if (shootTime >= number ){
+//            retracting = true;
+//        }else if (rettoo long){
+//            disable
+//        }
+//    }
+    
+    public void timecheck(){
+        boolean isShooterLagging = true;
+        boolean isRetractLagging = true;
+    }
+    
+//    public boolean isShooterOut(){
+//         return encoder.get() >=0; 
+//    }
 }
