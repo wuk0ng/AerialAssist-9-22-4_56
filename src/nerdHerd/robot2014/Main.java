@@ -13,18 +13,31 @@ import nerdHerd.util.ThreeCimBallShifter;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.DriverStation;
+import nerdHerd.util.Thresholder;
 
 public class Main extends NerdyBot{
     Joystick leftJoystick, rightJoystick, articJoystick;
     NerdyTimer autonomousTimer = new NerdyTimer(2.0), autonomousShooterTimer = new NerdyTimer(5.0);
     PainTrain myRobot;
     Timer timer;
-    //KinectStick leftStick, rightStick;
-    boolean shoot = false;
+    double shotValue, holdValue, thresholdValue;
+    
     
     
     double leftSpeed = 0.0, rightSpeed = 0.0;
     boolean isRunningAutonomous = false;
+
+        thresholdValue = (DriverStation.getInstance().getAnalogIn(3)) * 100;
+        if(thresholdValue > 1){
+            thresholdValue = 1
+        }
+        
+        System.out.println("thresholdValue: " + m_thresholdValue);
+        shotValue = (DriverStation.getInstance().getAnalogIn(1)) * 100;
+        System.out.println("Shot: " + shotValue);
+        holdValue = (DriverStation.getInstance().getAnalogIn(2)) * 100;
+        System.out.println("Hold: " + holdValue);
     
 
     public void robotInit(){
@@ -37,6 +50,7 @@ public class Main extends NerdyBot{
         //leftStick = new KinectStick(1);
         //rightStick = new KinectStick(2);
         autonomousShooterTimer.start();
+//        filer           = new Filer();
 
     }
 
@@ -64,6 +78,8 @@ public class Main extends NerdyBot{
     
     public void teleopInit() {
         myRobot.enable();
+//        filer.connect();
+//        filer.println("Time , EncoderA, EncoderB, ShootEncoder, Shoot, Retract");
         timer.start();
         timer.reset();
     }
@@ -77,9 +93,8 @@ public class Main extends NerdyBot{
         boolean intakeOut   =  articJoystick.getRawButton(10);
         boolean intake      =  articJoystick.getRawButton(3);
         boolean outTake     =  articJoystick.getRawButton(2);
-        boolean shoot1       =  articJoystick.getRawButton(6);
-        boolean shoot2      = articJoystick.getRawButton(4);
-        boolean shoot3      = articJoystick.getRawButton(1);
+        boolean shootButton =  articJoystick.getRawButton(1);
+        boolean holdButton  =  articJoystick.getRawButton(5);
 
         
         if(intakeIn){
@@ -103,18 +118,25 @@ public class Main extends NerdyBot{
             myRobot.shift(ThreeCimBallShifter.GearNumber.kFirstGear);
         }
         
-        if(shoot1){
-            myRobot.shoot(0.2);
-        } else if (shoot2) {
-            myRobot.shoot(0.4);
-        } else if (shoot3) {
-            myRobot.shoot(0.6);
+       if(shootButton){
+           myRobot.shoot(shootButton);
+       }else if(holdButton){
+           myRobot.holdPosition(holdButton);
         }
         
         myRobot.   setLeft(leftSpeed);
         myRobot.   setRight(rightSpeed);
         
-        report('T');
+          SmartDashboard.putNumber("Encoder", m_encode.get());
+        SmartDashboard.putNumber("Shoot Timer", m_shootTimer.get());
+        SmartDashboard.putNumber("Retract Timer", m_retractTimer.get());
+        SmartDashboard.putNumber("shootTime", m_shootTime);
+        SmartDashboard.putNumber("retractTime", m_retractTime);
+        SmartDashboard.putNumber("thresholdValue: ", m_thresholdValue);
+        SmartDashboard.putNumber("shotValue", shotValue);
+        SmartDashboard.putNumber("holdValue", holdValue);
+        
+//        report('T');
     }
     
     public void teleopContinous(){
@@ -128,15 +150,23 @@ public class Main extends NerdyBot{
     
     public void disabled(){
         myRobot.run();
-        report('D');
+//        report('D');
+//        filer.close();
     }
     
-    private void report(char robotState)
-    {                
-        double time = timer.get();
-        SmartDashboard.putNumber("Encoder Left", myRobot.getLeftGBEncoder());
-        SmartDashboard.putNumber("Encoder Right", myRobot.getRightGBEncoder());
-        SmartDashboard.putNumber("Encoder Shooter", myRobot.getShooterEncoder());
+//    private void report(char robotState)
+//    {                
+//        double time = timer.get();
+//        filer.println(time + "," +robotState + ","
+//                + myRobot.getLeftGBEncoder() + "," 
+//                + myRobot.getRightGBEncoder() + "," 
+//                + myRobot.getShooterEncoder() + ","
+//                + myRobot.getShootTime() + ","
+//                + myRobot.getRetractTime() + ","
+//        );
+//        SmartDashboard.putDouble("Encoder Left", myRobot.getLeftGBEncoder());
+//        SmartDashboard.putDouble("Encoder Right", myRobot.getRightGBEncoder());
+//        SmartDashboard.putDouble("Encoder Shooter", myRobot.getShooterEncoder());
     }
 
 }

@@ -92,8 +92,12 @@ public class PainTrain {
 //        m_shooter.pullDown();
     }
     
-    public void shoot(double time){
-        m_shooter.shoot(time);
+    public void shoot(boolean shootButton){
+        m_shooter.shoot(shootButton); 
+    }
+    
+    public void holdPosition(boolean holdButton){
+        m_shooter.hold(holdButton); 
     }
     
     public void disableShooter(){
@@ -128,16 +132,20 @@ public class PainTrain {
        return m_encodeRight.get();
     }
     
-    public int getShooterEncoder(){
-       return m_shooter.getEncoder();
+    public void threshold(double value){
+        m_shooter.thresh(value);
     }
     
-    public double getShootTime(){
-       return m_shooter.getShootTime();
-    }
-    public double getRetractTime(){
-       return m_shooter.getRetractTime();
-    }
+//    public int getShooterEncoder(){
+//       return m_shooter.getEncoder();
+//    }
+//    
+//    public double getShootTime(){
+//       return m_shooter.getShootTime();
+//    }
+//    public double getRetractTime(){
+//       return m_shooter.getRetractTime();
+//    }
 //    public void check(){
 //        if(m_intake.isIntakeUp()){
 //            m_shooter.disable();
