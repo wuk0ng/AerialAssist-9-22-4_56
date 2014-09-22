@@ -24,6 +24,7 @@ public class PainTrain {
     private Encoder m_encodeLeft, m_encodeRight;
     private ThreeCimBallShifter.GearNumber m_gear = ThreeCimBallShifter.GearNumber.kFirstGear;
     private boolean m_isEnabled = false;
+    double m_holdValue = 0.0;
     
     
     public PainTrain(){
@@ -132,9 +133,9 @@ public class PainTrain {
        return m_encodeRight.get();
     }
     
-    public void threshold(double value){
-        m_shooter.thresh(value);
-    }
+//    public void threshold(double value){
+//        m_shooter.thresh(value);
+//    }
     
 //    public int getShooterEncoder(){
 //       return m_shooter.getEncoder();

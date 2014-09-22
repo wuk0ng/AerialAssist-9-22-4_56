@@ -21,23 +21,11 @@ public class Main extends NerdyBot{
     NerdyTimer autonomousTimer = new NerdyTimer(2.0), autonomousShooterTimer = new NerdyTimer(5.0);
     PainTrain myRobot;
     Timer timer;
-    double shotValue, holdValue, thresholdValue;
     
     
     
     double leftSpeed = 0.0, rightSpeed = 0.0;
     boolean isRunningAutonomous = false;
-
-        thresholdValue = (DriverStation.getInstance().getAnalogIn(3)) * 100;
-        if(thresholdValue > 1){
-            thresholdValue = 1
-        }
-        
-        System.out.println("thresholdValue: " + m_thresholdValue);
-        shotValue = (DriverStation.getInstance().getAnalogIn(1)) * 100;
-        System.out.println("Shot: " + shotValue);
-        holdValue = (DriverStation.getInstance().getAnalogIn(2)) * 100;
-        System.out.println("Hold: " + holdValue);
     
 
     public void robotInit(){
@@ -66,7 +54,7 @@ public class Main extends NerdyBot{
     
     public void autonomousContinous(){
        myRobot.run();
-       report('A');
+//       report('A');
     }
     
     public void autonomousInit(){
@@ -122,20 +110,14 @@ public class Main extends NerdyBot{
            myRobot.shoot(shootButton);
        }else if(holdButton){
            myRobot.holdPosition(holdButton);
-        }
+       }
         
-        myRobot.   setLeft(leftSpeed);
-        myRobot.   setRight(rightSpeed);
+        myRobot.setLeft(leftSpeed);
+        myRobot.setRight(rightSpeed);
         
-          SmartDashboard.putNumber("Encoder", m_encode.get());
-        SmartDashboard.putNumber("Shoot Timer", m_shootTimer.get());
-        SmartDashboard.putNumber("Retract Timer", m_retractTimer.get());
-        SmartDashboard.putNumber("shootTime", m_shootTime);
-        SmartDashboard.putNumber("retractTime", m_retractTime);
-        SmartDashboard.putNumber("thresholdValue: ", m_thresholdValue);
-        SmartDashboard.putNumber("shotValue", shotValue);
-        SmartDashboard.putNumber("holdValue", holdValue);
         
+        //need encoder values
+                
 //        report('T');
     }
     
@@ -169,4 +151,4 @@ public class Main extends NerdyBot{
 //        SmartDashboard.putDouble("Encoder Shooter", myRobot.getShooterEncoder());
     }
 
-}
+

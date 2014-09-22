@@ -13,7 +13,9 @@ package nerdHerd.robot2014;
 import edu.wpi.first.wpilibj.Victor;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import nerdHerd.util.Thresholder;
+import nerdHerd.util.InputValues;
 //import nerdHerd.util.Filer;
 
 /**
@@ -28,63 +30,72 @@ public class Shooter {
     Victor m_motor1, m_motor2, m_motor3;
     Encoder m_encode;
     Timer m_shootTimer, m_retractTimer;
-    Thresholder thresh; 
     boolean m_shooting = false;
     boolean m_retracting = false;
+    boolean m_holding;
     double power = 0;
-    double shotValue, holdValue;
+    double m_shotValue, m_holdValue = 0;
     double error = 0;
     double m_p = .025;
     double m_shootTime = 0.5;
     double m_retractTime = 2.0;
-    double m_thresholdValue; // max power.
-    boolean m_shootButton, m_holdButton, m_holdButton;
-    const retractPower = 0.2;
+    double m_thresholdValue; // max power, not used
+    boolean m_shootButton, m_holdButton;
+    final double retractPower = 0.2;
 
     public Shooter(int encoderA, int encoderB, int victor1, int victor2, int victor3) {
         m_encode = new Encoder(encoderA, encoderB);
         m_encode.start();
         m_encode.reset();
-        thresh = new Thresholder();
         m_motor1 = new Victor(victor1);
         m_motor2 = new Victor(victor2);
         m_motor3 = new Victor(victor3);
-
         m_shootTimer = new Timer();
         m_retractTimer = new Timer();
-       
+
     }
 
     public void run() {
 
-        holdValue = 0.0;     
-        
-         if (false == m_shooting && false == m_retracting && false == m_holding) {
+        if (false == m_shooting && false == m_retracting && false == m_holding) {
             if (m_shootButton) {
                 m_shooting = true;
                 m_shootTimer.reset();
                 m_shootTimer.start();
                 Shoot();
             } else {
+                m_holdValue = 0;
                 holdPosition();
             }
-        }
-          else if(false == m_shooting && false == m_retracting && true == m_holding){
-                   
-        }
-        } else if (false == m_shooting && true == m_retracting) {
+        } else if (false == m_shooting && false == m_retracting && true == m_holding) {
+            if (m_shootButton){
+                m_shooting = true;
+                m_shootTimer.reset();
+                m_shootTimer.start();
+                Shoot();
+            } else {
+                m_holdValue = InputValues.holdVal();
+                holdPosition();
+            } 
+        } else if (false == m_shooting && true == m_retracting && false == m_holding) {
+            m_holdValue = 0;
             Retract();
-        } else if (true == m_shooting && false == m_retracting) {
+        } else if (false == m_shooting && true == m_retracting && true == m_holding) {
+            m_holdValue = InputValues.holdVal();
+            Retract();
+        } else if (true == m_shooting && false == m_retracting && false == m_holding ){
             Shoot();
-        } else { // if(true == m_shooting && true == m_retracting){
-            // should never happen.
-            System.out.println("(true == shooting && true == retracting) should never happen");
+        } else if (true == m_shooting && false == m_retracting && true == m_holding){
+            Shoot();
+        } else{
+            System.out.println("WHAT IS HAPPENING");
+            SmartDashboard.putString("Shooter Error Message", "WHAT IS HAPPENING");
         }
 
         m_motor1.set(power);
         m_motor2.set(power);
         m_motor3.set(power);
-      
+
     }
 
     public void shoot(boolean shootButton) {
@@ -95,13 +106,9 @@ public class Shooter {
         m_holdButton = holdButton;
     }
     
-    public void thresh(double value){
-        Threshold(value);
-    }
-
     private void Shoot() {
 
-        if (m_encode.get() >= shotValue || m_shootTimer.get() > m_shootTime) {
+        if (m_encode.get() >= m_shotValue || m_shootTimer.get() > m_shootTime) {
             m_shooting = false;
             m_retracting = true;
             m_shootTimer.stop();
@@ -110,14 +117,13 @@ public class Shooter {
             m_retractTimer.reset();
             Retract();
         } else {
-            error = shotValue - m_encode.get();
+            error = m_shotValue - m_encode.get();
             power = -Thresholder.threshold(m_p * error);
         }
     }
 
-
     private void Retract() {
-        if (m_encode.get() <= holdValue || m_retractTimer.get() > m_retractTime) {
+        if (m_encode.get() <= m_holdValue || m_retractTimer.get() > m_retractTime) {
             power = 0;
             m_shooting = false;
             m_retracting = false;
@@ -129,7 +135,7 @@ public class Shooter {
     }
 
     private void holdPosition() {
-        error = holdValue - m_encode.get();
+        error = m_holdValue - m_encode.get();
         power = Thresholder.threshold(m_p * error);
     }
 
