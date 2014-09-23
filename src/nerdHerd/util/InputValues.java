@@ -11,7 +11,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 
 /**
  *
- * @author M0nkey
+ * @author Mr. Mallory
  */
 public class InputValues {
     

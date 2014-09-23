@@ -5,8 +5,8 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 /**
- * @author Dietrich Henson
- * @version 20140919
+ * @author Mr. Mallory
+ * @version 20140922
  */
 package nerdHerd.robot2014;
 
@@ -16,7 +16,6 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import nerdHerd.util.Thresholder;
 import nerdHerd.util.InputValues;
-//import nerdHerd.util.Filer;
 
 /**
  * The VM is configured to automatically run this class,and to call the
@@ -36,7 +35,8 @@ public class Shooter {
     double power = 0;
     double m_shotValue, m_holdValue = 0;
     double error = 0;
-    double m_p = .025;
+    double m_pHold = .025;
+    double m_pShoot = 0.2;
     double m_shootTime = 0.5;
     double m_retractTime = 2.0;
     double m_thresholdValue; // max power, not used
@@ -86,6 +86,7 @@ public class Shooter {
         } else if (true == m_shooting && false == m_retracting && false == m_holding ){
             Shoot();
         } else if (true == m_shooting && false == m_retracting && true == m_holding){
+            m_holdValue = InputValues.holdVal();
             Shoot();
         } else{
             System.out.println("WHAT IS HAPPENING");
@@ -118,7 +119,7 @@ public class Shooter {
             Retract();
         } else {
             error = m_shotValue - m_encode.get();
-            power = -Thresholder.threshold(m_p * error);
+            power = -Thresholder.threshold(m_pShoot * error);
         }
     }
 
@@ -136,7 +137,7 @@ public class Shooter {
 
     private void holdPosition() {
         error = m_holdValue - m_encode.get();
-        power = Thresholder.threshold(m_p * error);
+        power = Thresholder.threshold(m_pHold * error);
     }
 
     public void disable() {

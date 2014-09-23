@@ -11,7 +11,6 @@ import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Victor;
 import nerdHerd.util.ThreeCimBallShifter;
-import nerdHerd.robot2014.Shooter;
 /**
  *
  * @author Jordan
@@ -132,10 +131,6 @@ public class PainTrain {
     public int getRightGBEncoder(){
        return m_encodeRight.get();
     }
-    
-//    public void threshold(double value){
-//        m_shooter.thresh(value);
-//    }
     
 //    public int getShooterEncoder(){
 //       return m_shooter.getEncoder();
